@@ -1,0 +1,12 @@
+Where do virtual functions, vtable reside? 
+Inheritance: Is there a base portion specifically in the derived object?
+When do we use privatevirtual?
+
+
+https://isocpp.org/wiki/faq/strange-inheritance
+https://isocpp.org/wiki/faq/virtual-functions
+
+in a derived class, if your base class has a virtual destructor, your own destructor is automatically virtual. You might need an 
+explicitly defined destructor for other reasons, but there’s no need to redeclare a destructor simply to make sure it is virtual. 
+No matter whether you declare it with the virtual keyword, declare it without the virtual keyword, or don’t declare it at all, it’s 
+still virtual.
