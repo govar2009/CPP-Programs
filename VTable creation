@@ -1,1 +1,13 @@
-Vtable is created during compile time.
+1.  Every class that uses virtual functions is given it’s own virtual table. 
+    This table is simply a static array that the compiler sets up at compile time.
+    
+2.  Each entry in this table is simply a function pointer that points to the most-derived function accessible by that class.
+
+3.  The compiler also adds a hidden pointer to the base class, which we will call *__vptr. *__vptr is set (automatically) when a class instance is created so that it points to the virtual table for that class.
+
+4.  *__vptr is inherited by derived classes.
+
+5.  Calling a virtual function is slower than calling a non-virtual function for a couple of reasons: First, we have to use the *__vptr to get to the appropriate virtual table.
+
+
+
