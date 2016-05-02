@@ -1,0 +1,41 @@
+#include <stdio.h>
+
+
+//Without virtual in line number 14, dervied destructor won't be called when 
+//base ref (Holding derived obj) calls destrctor or if we delete base ref
+class Base
+{
+public:
+    Base()
+    {
+        cout << "Base Class constructor" << endl;
+    }
+
+    virtual ~Base()//Try without virtual also.
+    {
+        cout << "Base Class destructor" << endl;
+    }
+};
+
+
+class Derived: public Base
+{
+public:
+    Derived()
+    {
+        cout << "Derived Class constructor" << endl;
+    }
+
+    ~Derived()
+    {
+        cout << "Derived Class destructor" << endl;
+    }
+};
+
+int main(int argc, char *argv[])
+{
+    Base *b = new Derived();
+
+    delete b;
+    //b->~Base();
+}
