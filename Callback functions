@@ -1,0 +1,100 @@
+From
+http://stackoverflow.com/questions/824234/what-is-a-callback-function/23453352#23453352
+
+Opaque Definition
+A callback function is a function you provide to another piece of code, allowing it to be called by that code.
+
+Contrived example
+Why would you want to do this? Let's say there is a service you need to invoke. If the service returns immediately, you just:
+
+Call it
+Wait for the result
+Continue once the result comes in
+For example, suppose the service were the factorial function. When you want the value of 5!, you would invoke factorial(5), and the following steps would occur:
+
+Your current execution location is saved (on the stack, but that's not important)
+Execution is handed over to factorial
+When factorial completes, it puts the result somewhere you can get to it
+Execution comes back to where it was in [1]
+Now suppose factorial took a really long time, because you're giving it huge numbers and it needs to run on some supercomputing cluster somwhere. Let's say you expect it to take 5 minutes to return your result. You could:
+
+Keep your design and run your program at night when you're asleep, so that you're not staring at the screen half the time
+Design your program to do other things while factorial is doing its thing
+If you choose the second option, then callbacks might work for you.
+
+End-to-end design
+In order to exploit a callback pattern, what you want is to be able to call factorial in the following way:
+
+factorial(really_big_number, what_to_do_with_the_result)
+The second parameter, what_to_do_with_the_result, is a function you send along to factorial, in the hope that factorial will call it on its result before returning.
+
+Yes, this means that factorial needs to have been written to support callbacks.
+
+Now suppose that you want to be able to pass a parameter to your callback. Now you can't, because you're not going to be calling it, factorial is. So factorial needs to be written to allow you to pass your parameters in, and it will just hand them over to your callback when it invokes it. It might look like this:
+
+factorial (number, callback, params)
+{
+    result = number!   // i can make up operators in my pseudocode
+    callback (result, params)
+}
+Now that factorial allows this pattern, your callback might look like this:
+
+logIt (number, logger)
+{
+    logger.log(number)
+}
+and your call to factorial would be
+
+factorial(42, logIt, logger)
+What if you want to return something from logIt? Well, you can't, because factorial isn't paying attention to it.
+
+Well, why can't factorial just return what your callback returns?
+
+Making it non-blocking
+Since execution is meant to be handed over to the callback when factorial is finished, it really shouldn't return anything to its caller. And ideally, it would somehow launch its work in another thread / process / machine and return immediately so that you can continue, maybe something like this:
+
+factorial(param_1, param_2, ...)
+{
+    new factorial_worker_task(param_1, param_2, ...);
+    return;
+}
+This is now an "asynchronous call", meaning that when you call it, it returns immediately but hasn't really done its job yet. So you do need mechanisms to check on it, and to obtain its result when its finished, and your program has gotten more complex in the process.
+
+And by the way, using this pattern the factorial_worker_task can launch your callback asynchronously and return immediately.
+
+So what do you do?
+The answer is to stay within the callback pattern. Whenever you want to write
+
+a = f()
+g(a)
+and f is to be called asynchronously, you will instead write
+
+f(g)
+where g is passed as a callback.
+
+This fundamentally changes the flow-topology of your program, and takes some getting used to.
+
+Your programming language could help you a lot by giving you a way to create functions on-the-fly. In the code immediately above, the function g might be as small as print (2*a+1). If your language requires that you define this as a separate function, with an entirely unnecessary name and signature, then your life is going to get unpleasant if you use this pattern a lot.
+
+If, on the other hand, you language allows you to create lambdas, then you are in much better shape. You will then end up writing something like
+
+f( func(a) { print(2*a+1); })
+which is so much nicer.
+
+How to pass the callback
+How would you pass the callback function to factorial? Well, you could do it in a number of ways.
+
+If the called function is running in the same process, you could pass a function pointer
+Or maybe you want to maintain a dictionary of fn name --> fn ptr in your program, in which case you could pass the name
+Maybe your language allows you to define the function in-place, possible as a lambda! Internally it is creating some kind of object and passing a pointer, but you don't have to worry about that.
+Perhaps the function you are calling is running on an entirely separate machine, and you are calling it using a network protocol like HTTP. You could expose your callback as an HTTP-callable function, and pass its URL.
+You get the idea.
+
+The recent rise of callbacks
+In this web era we have entered, the services we invoke are often over the network. We often do not have any control over those services i.e. we didn't write them, we don't maintain them, we can't ensure they're up or how they're performing.
+
+But we can't expect our programs to block while we're waiting for these services to respond. Being aware of this, the service providers often design APIs using the callback pattern.
+
+JavaScript supports callbacks very nicely e.g. with lambdas and closures. And there is a lot of activity in the JavaScript world, both on the browser as well as on the server. There are even JavaScript platforms being developed for mobile.
+
+As we move forward, more and more of us will be writing asynchronous code, for which this understanding will be essential.
